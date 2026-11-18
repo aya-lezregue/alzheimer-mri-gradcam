@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
@@ -10,7 +11,8 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 # ---------- Configuration ----------
-MODEL_PATH = "resnet50_phase2_best.pth"
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "models" / "resnet50_phase2_best.pth"
 CLASSES = ["MildDemented", "ModerateDemented", "NonDemented", "VeryMildDemented"]  # ordre = entraînement
 LABELS_FR = {
     "MildDemented": "Léger",
@@ -39,7 +41,7 @@ def denormalize(t):
 def load_model():
     m = models.resnet50(weights=None)            # pas besoin d'ImageNet : on charge nos poids
     m.fc = nn.Sequential(nn.Dropout(0.4), nn.Linear(m.fc.in_features, 4))
-    m.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
+    m.load_state_dict(torch.load(MODEL_PATH, map_location="cpu", weights_only=True))
     m.eval()
     for p in m.parameters():                      # Grad-CAM a besoin des gradients
         p.requires_grad_(True)
@@ -77,7 +79,14 @@ with st.sidebar:
     st.caption("Les résultats ne sont fiables que pour des images de même type que celles "
                "de l'entraînement (coupes axiales 2D, cerveau seul).")
 
+if not MODEL_PATH.exists():
+    st.error(f"Modèle introuvable : {MODEL_PATH}. "
+             "Téléchargez resnet50_phase2_best.pth (lien dans le README) "
+             "et placez-le dans le dossier models/.")
+    st.stop()
+
 model = load_model()
+
 file = st.file_uploader("Importer une IRM (JPG ou PNG)", type=["jpg", "jpeg", "png"])
 
 if file is None:
