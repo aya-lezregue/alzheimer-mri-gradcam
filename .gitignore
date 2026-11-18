@@ -221,3 +221,16 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Données et poids (trop lourds)
+data/train/
+data/test/
+data/*.zip
+*.pth
+*.pt
+!models/.gitkeep
+
+# Python
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+*.pyc
